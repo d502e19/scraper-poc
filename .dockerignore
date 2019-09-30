@@ -1,0 +1,12 @@
+# Rust build dir
+target/
+
+# Docker compsoe
+docker-compose.yml
+
+# Intellij
+poc.iml
+.idea
+
+# Git
+.gitignore

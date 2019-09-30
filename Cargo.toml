@@ -1,0 +1,12 @@
+[package]
+name = "poc"
+version = "0.1.0"
+authors = ["Jacob Jenner Rasmussen <jjra17@student.aau.dk>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = "^0.1"
+lapin-futures = "^0.27"
+futures = "^0.1"
