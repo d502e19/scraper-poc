@@ -2,13 +2,14 @@ extern crate tokio;
 extern crate lapin_futures;
 
 use futures::future::Future;
-use lapin_futures as lapin;
 use crate::lapin_futures::{Client, ConnectionProperties, BasicProperties};
 use crate::lapin_futures::options::{QueueDeclareOptions, BasicConsumeOptions, BasicPublishOptions};
 use crate::lapin_futures::types::FieldTable;
 
 use std::str;
 use tokio::prelude::*;
+use lapin_futures::message::Delivery;
+use lapin_futures::{Channel, Error};
 
 fn main() {
     let addr = std::env::var("AMQP_ADDR").unwrap_or_else(|_| "amqp://127.0.0.1:5672/%2f".into());
@@ -22,9 +23,8 @@ fn main() {
             let id = channel.id();
             println!("created channel with id: {}", id);
 
-            // we using a "move" closure to reuse the channel
-            // once the queue is declared. We could also clone
-            // the channel
+            // We use a "move" closure to reuse the channel once the queue is declared.
+            // We could also clone the channel.
             let dec_queue = channel.queue_declare("hello", QueueDeclareOptions::default(), FieldTable::default());
             let on_queue = dec_queue.then(move |queue| {
                 println!("channel {} declared queue {}", id, "hello");
@@ -45,15 +45,12 @@ fn main() {
                     BasicConsumeOptions::default(),
                     FieldTable::default()
                 ).then(move |consumer| {
-                    /*let consumer = consumer.unwrap();
+                    let consumer = consumer.unwrap();
 
+                    // Runs infinitely until an error occurs
                     consumer.for_each(move |delivery| {
-                        println!("Message: {}", str::from_utf8(&delivery.data).unwrap());
-                        channel.basic_ack(delivery.delivery_tag, false);
-
-                        Ok(())
-                    })*/
-                    Ok(())
+                        handle_delivery(&channel, delivery)
+                    })
                 });
 
                 consume
@@ -62,4 +59,11 @@ fn main() {
             on_queue
         })
     ).wait_future().expect("runtime failure");
+}
+
+fn handle_delivery(channel: &Channel, delivery: Delivery) -> Result<(), Error> {
+    println!("Message: {}", str::from_utf8(&delivery.data).unwrap());
+    channel.basic_ack(delivery.delivery_tag, false);
+
+    Ok(())
 }
